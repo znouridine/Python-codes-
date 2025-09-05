@@ -1,0 +1,421 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 21 16:18:38 2024
+
+@author: nouri
+"""
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from statistics import mean
+from statistics import stdev
+from math import pi
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+from matplotlib.legend import Legend
+#Text option
+
+font = {'family': 'cursive',
+        'color':  'b',
+        'weight': 'bold',
+        'size': 11,
+        }
+
+# Chargement de fichier des valeurs préstine
+Rp = np.zeros((20, 11))
+X=np.linspace(1,20,20)
+name = input("Nom échantillon:")
+e = float(input('Epaisseur dépôt en nm: '))
+via = float(input('A tape 1, B tape 2, C tape 3, D tape 4 : '))
+n=input('Nombre de ligne avec au moins 5 cycle: ')
+N=input('Nombre de ligne testée: ')
+name1= ("Cyclabilité "+str(int(n))+"/"+str(int(N)))
+text = ('N°      Rp(Kohm)          V 1er Set    Vreset       R 1er Set       R reset')
+text2 = ("La valeur moyenne est: ")
+text3 = ("Ecart-type= ")
+text4 = ("La valeur moyenne (sans valeur abérrante) est: ")
+text5 = ("Ecart-type(sans valeur abérrante)=: ")
+with open("Résistance pristine/" + name + ".txt", "w") as f:
+    f.write(text)
+    f.write('\n')
+    for t in range(20):
+        Rp[t][0] = t + 1
+        Rp[t][1] = input("Résistance pristine ligne" + str(t + 1) + ":")
+        """
+        Rp[t][2] = float(input("V premier Set ligne" + str(t + 1) + ":"))
+        Rp[t][3] = float(input("V premier ReSet ligne" + str(t + 1) + ":"))
+        Rp[t][4] = float(input("R premier Set ligne" + str(t + 1) + ":"))
+        Rp[t][5] = float(input("R max ReSet ligne" + str(t + 1) + ":"))
+        """
+        f.write(str(Rp[t][0]))
+        f.write('\t')
+        f.write('\t')
+        f.write(str(Rp[t][1]))
+        f.write('\t')
+        f.write('\t')
+        f.write(str(Rp[t][2]))
+        f.write('\t')
+        f.write('\t')
+        f.write(str(Rp[t][3]))
+        f.write('\t')
+        f.write('\t')
+        f.write(str(Rp[t][4]))
+        f.write('\t')
+        f.write('\t')
+        f.write(str(Rp[t][5]))
+        f.write('\n')
+
+data = np.loadtxt("Résistance pristine/" + name + ".txt", skiprows=1)
+a = data[:, 0]
+b = data[:, 1]
+c = data[:, 2]
+d = data[:, 3]
+f = data[:, 4]
+g = data[:, 5]
+# Calcul de la resistance théorique + incertitute
+r_th_A = 1e-3*(35 * e*1e-7) / (pi * 1e-4*1e-4)
+r_th_B = 1e-3*(35 * e*1E-7) / (pi * 0.6e-4*0.6e-4)
+r_th_C = 1e-3*(35 * e*1E-7) / (pi * 0.4e-4*0.4e-4)
+r_th_D = 1e-3*(35 * e*1E-7) / (pi * 0.25e-4*0.25e-4)
+
+# Moyenne des valeurs des résistance préstine
+k = mean(b)
+# Moyenne des valeurs des V premier Set
+_a=0
+for i in range (20):
+    if Rp[i][2]!=0:
+        _a=_a+1
+l = (sum(c))/_a
+# Moyenne des valeurs des V premier ReSet
+_b=0
+for i in range (20):
+    if Rp[i][3]!=0:
+        _b=_b+1
+m = (sum(d))/_b
+# Moyenne des valeurs des R premier Set
+_c=0
+for i in range (20):
+    if Rp[i][4]!=0:
+        _c=_c+1
+o = (sum(f))/_c
+# Moyenne des valeurs des R max ReSet
+_d=0
+for i in range (20):
+    if Rp[i][2]!=0:
+        _d=_d+1
+p = (sum(g))/_d
+
+#Mettre les moyenne dans la matrix
+for t in range(20):
+    Rp[t][6] = l # Moyenne V premier SET
+    Rp[t][7] = m # Moyenne V premier RESET
+    Rp[t][8] = o # Moyenne R premier SET
+    Rp[t][9] = p # Moyenne R max RESET
+# Taille A
+if via == 1:
+    val_inf = r_th_A - (r_th_A / 2)
+    val_sup = r_th_A + (r_th_A / 2)
+    g = list();
+    s = list()
+    print("La moyenne des résistance pristine est : ", k)
+    for h in range(20):
+        if val_inf < b[h] < val_sup:
+            g.append(b[h])
+    q = mean(g)
+    print("La moyenne (sans valeurs abérrantes) des résistances pristines est : ", str(q))
+    # Calcul de l'écart type
+    with open("Résistance pristine/" + name + ".txt", "a") as f:
+        f.write(text1)
+        f.write('\n')
+        f.write('\n')
+        f.write(text)
+        f.write('\n')
+        sigma = stdev(b)
+        print("L", "'", "écart-type sigma", "est égale à : ", str(sigma))
+        for d in range(20):
+            if val_inf < b[d] < val_sup:
+                s.append(b[d])
+        sigma_prime = stdev(s)
+        print("Ecart-type (sans valeurs abérrantes) des résistance pristine est : ", str(sigma_prime))
+    """
+    #Selection des lignes
+        Rt=80
+        Rp_inf=Rt-Rt/2
+        Rp_sup=Rt+Rt/2
+        b=np.zeros((20,2))
+        j=0
+        
+        for i in range(20):
+            
+            b[i][1]=l[i]
+            b[i][0]=a[i]
+            if Rp_inf<b[i][1]<Rp_sup: 
+                    j=j+1
+                    print('ligne=', str(b[i][0]), 'Rp=',str(b[i][1]),'K ohm' )
+                    f.write(str(b[i][0]))
+                    f.write('\t')
+                    f.write('\t')
+                    f.write('\t')
+                    f.write('\t')
+                    f.write(str(b[i][1]))
+                    f.write('\n')
+        print(j, "lignes sont exploitables sur la puce",name)
+    with open("Résistance pristine/"+name+".txt", "a") as f: 
+            f.write(text2)
+            f.write(str(k))
+            f.write('\n')
+            f.write(text4)
+            f.write(str(q))
+            f.write('\n')
+            f.write(text3)
+            f.write(str(sigma))
+            f.write('\n')
+            f.write(text5)
+            f.write(str(sigma_prime))
+            f.write('\n')
+"""
+
+    plt.figure()
+    for t in range(20):
+        plt.plot(X[t],Rp[t][1], 'r.')
+        plt.plot(X[t],r_th_A,'c_')
+        plt.title(name)
+        plt.xlabel("N° ligne")
+        plt.ylabel("Résistance (K ohm)")
+    plt.xlim([0,21])
+    plt.ylim([0,500])
+    plt.grid()
+    plt.xticks([0,1,2,3,4,
+                5,6,7,8,9,
+                10,11,12,13,
+                14,15,16,17,19,20])
+    plt.yticks([0,10,20,30,40,50])
+# Taille B
+for t in range(20):
+    Rp[t][10] = r_th_B # Mettre la valeur de R th dans la matrix
+if via == 2:
+    val_inf = r_th_B - (r_th_B / 2)
+    val_sup = r_th_B + (r_th_B / 2)
+    g = list();
+    s = list()
+    print("La moyenne des résistance pristine est : ", k)
+    for h in range(20):
+        if val_inf < b[h] < val_sup:
+            g.append(b[h])
+    q = mean(g)
+    print("La moyenne (sans valeurs abérrantes) des résistances pristines est : ", str(q))
+    # Calcul de l'écart type
+    sigma = stdev(b)
+    print("L", "'", "écart-type sigma", "est égale à : ", str(sigma))
+    for d in range(20):
+        if val_inf < b[d] < val_sup:
+            s.append(b[d])
+    sigma_prime = stdev(s)
+    print("Ecart-type (sans valeurs abérrantes) des résistance pristine est : ", str(sigma_prime))
+   
+    fig, ax= plt.subplots()
+    line1,=ax.plot(X[:],Rp[:,1], 'r.',markersize=4,label='Rp') #Plot Valeurs Rp
+    #line2,=ax.plot(X[:],Rp[:,4], 'gs',markersize=4,label='R1SET') #Plot Valeurs R1SET
+    #line3,=ax.plot(X[:],Rp[:,5], 'b^',markersize=4,label='RmaxRESET') #Plot Valeurs RmaxRESET
+    line4,=ax.plot(X[:],Rp[:,10],'c-') #Plot R théorique
+    #line5,=ax.plot(X[:],Rp[:,8],'g-') #Plot moy R1SET 
+    #line6,=ax.plot(X[:],Rp[:,9],'b-')#Plot moy Rmax RESET
+    ax.set_title(name,loc='center')
+    #ax.set_title(name1,loc='Right')
+    ax.set_ylabel("Résistance (K ohm)")
+    ax.set_xlabel("N° ligne")
+    ax.set_xlim([0,21])
+    ax.set_ylim([0.1,1000])
+    ax.set_yscale('log')
+    ax.grid()
+    L1=ax.legend(fontsize=7,loc='upper right',bbox_to_anchor=(1.25, 1.2))
+    L2=ax.legend([line4],['Rp.th:'+str(float("%.1f" % r_th_B))+'k']
+                  ,fontsize=10,loc='upper right',bbox_to_anchor=(1.24, 1))
+    ax.add_artist(L1)
+    ax.set_xticks([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+    #ax.set_yticks([0.1,10,20,30,40,50,60,70,400])
+    #ax1.text(,"V1Set: "+str(float("%.2f" % l))+"V", fontdict=font)
+    #ax1.text("V1ReSet: "+str(float("%.2f" %m))+"V", fontdict=font)
+    fig.set_dpi(1200)
+    """
+    #ax2 = ax1.twinx() 
+    line7,=ax2.plot(X[:],Rp[:,2], 'kX',markersize=4,label='V1SET') #Plot Valeurs V premier SET
+    line8,=ax2.plot(X[:],Rp[:,3], 'y*',markersize=4,label='V1RESET') #Plot Valeurs V premier RESET
+    line9,=ax2.plot(X[:],Rp[:,6],'k-') #Plot moy V1SET 
+    line10,=ax2.plot(X[:],Rp[:,7],'y-')#Plot moy V1 RESET
+    ax2.set_ylabel("Tension en V")
+    ax2.set_xticks([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+    ax1.set_xlim([0,21])
+    ax2.grid()
+    ax2.set_xlabel("N° ligne")
+    L3=ax2.legend(fontsize=7,loc='upper right',bbox_to_anchor=(1.25, 1))
+    L4=ax2.legend([line9,line10],['M(V1SET):'+str(float("%.1f" % l))+'V',
+                                       'M(V1RESET):'+str(float( "%.1f" %m))+'V']
+                  ,fontsize=7,loc='lower right',bbox_to_anchor=(1.3, 0))
+    ax2.add_artist(L3)
+    #ax2.text("R1Set: "+str(float("%.2f" %o))+"KOhm", fontdict=font)
+    #ax2.text("RmaxReSet: "+str(float("%.2f" %p))+"KOhm", fontdict=font)
+    fig.set_dpi(1200)
+    """
+# Taille C
+if via == 4:
+    val_inf = r_th_C - (r_th_C / 2)
+    val_sup = r_th_C + (r_th_C / 2)
+    g = list();
+    s = list()
+    print("La moyenne des résistance pristine est : ", k)
+    for h in range(20):
+        if val_inf < b[h] < val_sup:
+            g.append(b[h])
+    q = mean(g)
+    print("La moyenne (sans valeurs abérrantes) des résistances pristines est : ", str(q))
+    # Calcul de l'écart type
+    with open("Résistance pristine/" + name + ".txt", "a") as f:
+        f.write(text1)
+        f.write('\n')
+        f.write('\n')
+        f.write(text)
+        f.write('\n')
+        sigma = stdev(b)
+        print("L", "'", "écart-type sigma", "est égale à : ", str(sigma))
+        for d in range(20):
+            if val_inf < b[d] < val_sup:
+                s.append(b[d])
+        sigma_prime = stdev(s)
+        print("Ecart-type (sans valeurs abérrantes) des résistance pristine est : ", str(sigma_prime))
+    """
+    #Selection des lignes
+        Rt=80
+        Rp_inf=Rt-Rt/2
+        Rp_sup=Rt+Rt/2
+        b=np.zeros((20,2))
+        j=0
+        
+        for i in range(20):
+            
+            b[i][1]=l[i]
+            b[i][0]=a[i]
+            if Rp_inf<b[i][1]<Rp_sup: 
+                    j=j+1
+                    print('ligne=', str(b[i][0]), 'Rp=',str(b[i][1]),'K ohm' )
+                    f.write(str(b[i][0]))
+                    f.write('\t')
+                    f.write('\t')
+                    f.write('\t')
+                    f.write('\t')
+                    f.write(str(b[i][1]))
+                    f.write('\n')
+        print(j, "lignes sont exploitables sur la puce",name)
+    with open("Résistance pristine/"+name+".txt", "a") as f: 
+            f.write(text2)
+            f.write(str(k))
+            f.write('\n')
+            f.write(text4)
+            f.write(str(q))
+            f.write('\n')
+            f.write(text3)
+            f.write(str(sigma))
+            f.write('\n')
+            f.write(text5)
+            f.write(str(sigma_prime))
+            f.write('\n')
+"""
+
+    plt.figure()
+    for t in range(20):
+        plt.plot(X[t],Rp[t][1], 'r.')
+        plt.plot(X[t],r_th_C,'c_')
+        plt.title(name)
+        plt.xlabel("N° ligne")
+        plt.ylabel("Résistance (K ohm)")
+    plt.xlim([0,21])
+    plt.ylim([0,500])
+    plt.grid()
+    plt.xticks([0,1,2,3,4,
+                5,6,7,8,9,
+                10,11,12,13,
+                14,15,16,17,19,20])
+    plt.yticks([0,10,20,30,40,50,60,70,80,90,100,
+                110,120,130,140,150])
+# Taille D
+if via == 4:
+    val_inf = r_th_D - (r_th_D / 2)
+    val_sup = r_th_D + (r_th_D / 2)
+    g = list();
+    s = list()
+    print("La moyenne des résistance pristine est : ", k)
+    for h in range(20):
+        if val_inf < b[h] < val_sup:
+            g.append(b[h])
+    q = mean(g)
+    print("La moyenne (sans valeurs abérrantes) des résistances pristines est : ", str(q))
+    # Calcul de l'écart type
+    with open("Résistance pristine/" + name + ".txt", "a") as f:
+        f.write(text1)
+        f.write('\n')
+        f.write('\n')
+        f.write(text)
+        f.write('\n')
+        sigma = stdev(b)
+        print("L", "'", "écart-type sigma", "est égale à : ", str(sigma))
+        for d in range(20):
+            if val_inf < b[d] < val_sup:
+                s.append(b[d])
+        sigma_prime = stdev(s)
+        print("Ecart-type (sans valeurs abérrantes) des résistance pristine est : ", str(sigma_prime))
+    """
+    #Selection des lignes
+        Rt=80
+        Rp_inf=Rt-Rt/2
+        Rp_sup=Rt+Rt/2
+        b=np.zeros((20,2))
+        j=0
+        
+        for i in range(20):
+            
+            b[i][1]=l[i]
+            b[i][0]=a[i]
+            if Rp_inf<b[i][1]<Rp_sup: 
+                    j=j+1
+                    print('ligne=', str(b[i][0]), 'Rp=',str(b[i][1]),'K ohm' )
+                    f.write(str(b[i][0]))
+                    f.write('\t')
+                    f.write('\t')
+                    f.write('\t')
+                    f.write('\t')
+                    f.write(str(b[i][1]))
+                    f.write('\n')
+        print(j, "lignes sont exploitables sur la puce",name)
+    with open("Résistance pristine/"+name+".txt", "a") as f: 
+            f.write(text2)
+            f.write(str(k))
+            f.write('\n')
+            f.write(text4)
+            f.write(str(q))
+            f.write('\n')
+            f.write(text3)
+            f.write(str(sigma))
+            f.write('\n')
+            f.write(text5)
+            f.write(str(sigma_prime))
+            f.write('\n')
+"""
+
+    plt.figure()
+    for t in range(20):
+        plt.plot(X[t],Rp[t][1], 'r.')
+        plt.plot(X[t],r_th_D,'c_')
+        plt.title(name)
+        plt.xlabel("N° ligne")
+        plt.ylabel("Résistance (K ohm)")
+    plt.xlim([0,21])
+    plt.ylim([0,500])
+    plt.grid()
+    plt.xticks([0,1,2,3,4,
+                5,6,7,8,9,
+                10,11,12,13,
+                14,15,16,17,19,20])
+    plt.yticks([0,10,20,30,40,50,60,70,80,90,100,
+                110,120,130,140,150,160,170,180,190,200,
+                210,220,230,240,250,260,270,280,290,300,
+                310,320,330,340,350,360,370,380,390,400])
